@@ -1,8 +1,16 @@
 {
-  "name": "tm",
-  "module": "index.ts",
+  "name": "tm-serve",
+  "version": "0.1.0",
+  "description": "Serve local .user.js files for Tampermonkey installation",
+  "license": "MIT",
   "type": "module",
-  "private": true,
+  "bin": {
+    "tm-serve": "src/cli.ts"
+  },
+  "files": [
+    "src",
+    "!src/**/*.test.ts"
+  ],
   "devDependencies": {
     "@types/bun": "latest"
   },

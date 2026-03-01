@@ -15,9 +15,9 @@ export function generateTemplate(): string {
 export function buildIndexHtml(scriptUrl: string, scriptPath: string): string {
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>tm</title></head>
+<head><meta charset="utf-8"><title>tm-serve</title></head>
 <body>
-  <h1>tm</h1>
+  <h1>tm-serve</h1>
   <p>Monitoring: <code>${scriptPath}</code></p>
   <p>Install: <a href="${scriptUrl}">${scriptUrl}</a></p>
 </body>
