@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Serve local .user.js files for Tampermonkey installation",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrsekut/tm-serve.git"
+  },
   "type": "module",
   "bin": {
     "tm-serve": "src/cli.ts"
