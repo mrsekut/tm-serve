@@ -1,6 +1,6 @@
 {
   "name": "tm-serve",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Serve local .user.js files for Tampermonkey installation",
   "license": "MIT",
   "repository": {
