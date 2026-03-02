@@ -1,56 +1,87 @@
 #!/usr/bin/env bun
+// CLI entry point. Routes subcommands: dev, push, pull, init.
 
 import { resolve } from 'path';
-import open from 'open';
-import { generateTemplate } from './template';
-import { startServer } from './server';
-import { watchScript } from './watcher';
+import { parseArgs } from 'util';
+import { dev } from './dev';
+import { push } from './push';
+import { pull } from './pull';
+import { init } from './init';
 
 const DEFAULT_SCRIPT_NAME = 'script.user.js';
 const DEFAULT_PORT = 4889;
 
+const SUBCOMMANDS = new Set(['dev', 'push', 'pull', 'init']);
+
 main();
 
-function parseArgs(argv: string[]): { scriptPath: string; port: number } {
-  const args = argv.slice(2);
-  const scriptPath = resolve(args[0] ?? DEFAULT_SCRIPT_NAME);
-  const port = Number(process.env['PORT']) || DEFAULT_PORT;
-  return { scriptPath, port };
-}
-
 async function main() {
-  const { scriptPath, port } = parseArgs(process.argv);
+  const port = Number(process.env['PORT']) || DEFAULT_PORT;
+  const args = process.argv.slice(2);
+  const subcommand = SUBCOMMANDS.has(args[0] ?? '') ? args[0]! : undefined;
+  const restArgs = subcommand ? args.slice(1) : args;
 
-  await ensureScript(scriptPath);
+  switch (subcommand) {
+    case 'init': {
+      await init();
+      break;
+    }
 
-  let scriptContent = await Bun.file(scriptPath).text();
+    case 'push': {
+      const { values, positionals } = parseArgs({
+        args: restArgs,
+        options: {
+          all: { type: 'boolean', default: false },
+        },
+        allowPositionals: true,
+      });
 
-  const server = startServer(scriptPath, port, async () => scriptContent);
+      const scriptPaths = resolveScriptPaths(values.all ?? false, positionals);
 
-  watchScript(scriptPath, async () => {
-    scriptContent = await Bun.file(scriptPath).text();
-  });
+      if (scriptPaths.length === 0) {
+        console.error('No .user.js files found.');
+        process.exit(1);
+      }
 
-  const scriptFileName = scriptPath.split('/').pop() ?? 'script.user.js';
-  const scriptUrl = `http://127.0.0.1:${port}/${scriptFileName}`;
+      await push(scriptPaths, port);
+      break;
+    }
 
-  try {
-    await open(scriptUrl);
-  } catch {
-    console.log(`Open ${scriptUrl} in your browser to install the script.`);
+    case 'pull': {
+      const { positionals } = parseArgs({
+        args: restArgs,
+        allowPositionals: true,
+      });
+      const zipPath = positionals[0];
+      if (!zipPath) {
+        console.error('Usage: tm-serve pull <backup.zip>');
+        process.exit(1);
+      }
+      const outputDir = resolve('scripts');
+      await pull(resolve(zipPath), outputDir);
+      break;
+    }
+
+    case 'dev':
+    default: {
+      // Backward compat: `tm-serve foo.user.js` => dev
+      const scriptPath = resolve(restArgs[0] ?? DEFAULT_SCRIPT_NAME);
+      await dev(scriptPath, port);
+      break;
+    }
   }
-
-  process.on('SIGINT', () => {
-    console.log('\nShutting down...');
-    server.stop();
-    process.exit(0);
-  });
 }
 
-async function ensureScript(scriptPath: string): Promise<void> {
-  const file = Bun.file(scriptPath);
-  if (!(await file.exists())) {
-    await Bun.write(scriptPath, generateTemplate());
-    console.log(`Created template: ${scriptPath}`);
+function resolveScriptPaths(all: boolean, positionals: string[]): string[] {
+  if (all) {
+    const glob = new Bun.Glob('**/*.user.js');
+    return Array.from(glob.scanSync({ cwd: process.cwd() })).map(f =>
+      resolve(f),
+    );
   }
+  if (positionals.length > 0) {
+    return positionals.map(f => resolve(f));
+  }
+  console.error('Usage: tm-serve push [--all | files...]');
+  process.exit(1);
 }
