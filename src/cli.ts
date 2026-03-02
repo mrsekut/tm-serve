@@ -1,17 +1,17 @@
 #!/usr/bin/env bun
-// CLI entry point. Routes subcommands: dev, push, pull, init.
+// CLI entry point. Routes subcommands: dev, push, import, init.
 
 import { resolve } from 'path';
 import { parseArgs } from 'util';
 import { dev } from './dev';
 import { push } from './push';
-import { pull } from './pull';
+import { importScripts } from './import';
 import { init } from './init';
 
 const DEFAULT_SCRIPT_NAME = 'script.user.js';
 const DEFAULT_PORT = 4889;
 
-const SUBCOMMANDS = new Set(['dev', 'push', 'pull', 'init']);
+const SUBCOMMANDS = new Set(['dev', 'push', 'import', 'init']);
 
 main();
 
@@ -47,18 +47,18 @@ async function main() {
       break;
     }
 
-    case 'pull': {
+    case 'import': {
       const { positionals } = parseArgs({
         args: restArgs,
         allowPositionals: true,
       });
       const zipPath = positionals[0];
       if (!zipPath) {
-        console.error('Usage: tm-serve pull <backup.zip>');
+        console.error('Usage: tm-serve import <backup.zip>');
         process.exit(1);
       }
       const outputDir = resolve('scripts');
-      await pull(resolve(zipPath), outputDir);
+      await importScripts(resolve(zipPath), outputDir);
       break;
     }
 

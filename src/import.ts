@@ -1,21 +1,24 @@
-// pull command. Extracts .user.js files from a Tampermonkey backup ZIP and writes them to scripts/ with diff confirmation.
+// import command. Extracts .user.js files from a Tampermonkey backup ZIP and writes them to scripts/ with diff confirmation.
 
 import { tmpdir } from 'os';
 import { join, basename } from 'path';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { $ } from 'bun';
 
-export async function pull(zipPath: string, outputDir: string): Promise<void> {
+export async function importScripts(
+  zipPath: string,
+  outputDir: string,
+): Promise<void> {
   const file = Bun.file(zipPath);
   if (!(await file.exists())) {
     console.error(`File not found: ${zipPath}`);
     process.exit(1);
   }
 
-  const tmpDir = await mkdtemp(join(tmpdir(), 'tm-serve-pull-'));
+  const tmpDir = await mkdtemp(join(tmpdir(), 'tm-serve-import-'));
 
   try {
-    await $`unzip -o ${zipPath} -d ${tmpDir}`.quiet();
+    await $`ditto -x -k ${zipPath} ${tmpDir}`.quiet();
 
     const glob = new Bun.Glob('**/*.user.js');
     const userScripts = Array.from(
@@ -49,7 +52,6 @@ export async function pull(zipPath: string, outputDir: string): Promise<void> {
           continue;
         }
 
-        // Show diff
         console.log(`\n  Diff for ${name}:`);
         try {
           await $`diff --color ${destPath} ${srcPath}`;
@@ -84,9 +86,9 @@ export async function pull(zipPath: string, outputDir: string): Promise<void> {
 
 async function promptYesNo(question: string): Promise<boolean> {
   process.stdout.write(`${question} [y/N] `);
-  for await (const line of console) {
-    const answer = line.trim().toLowerCase();
-    return answer === 'y' || answer === 'yes';
-  }
-  return false;
+  const lines = Bun.stdin.stream().values();
+  const { value, done } = await lines.next();
+  if (done) return false;
+  const answer = new TextDecoder().decode(value).trim().toLowerCase();
+  return answer === 'y' || answer === 'yes';
 }

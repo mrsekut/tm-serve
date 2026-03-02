@@ -34,13 +34,13 @@ tm-serve push --all                 # all *.user.js under current directory
 tm-serve push scripts/a.user.js scripts/b.user.js  # specific files
 ```
 
-### `pull` — Import from backup
+### `import` — Import from backup
 
 Extracts `.user.js` files from a Tampermonkey backup ZIP and writes them to `scripts/`.
 Shows a diff and prompts for confirmation when an existing file differs.
 
 ```bash
-tm-serve pull ~/Downloads/tampermonkey-backup.zip
+tm-serve import ~/Downloads/tampermonkey-backup.zip
 ```
 
 ### `init` — Initialize project
@@ -54,3 +54,7 @@ tm-serve init
 ## Options
 
 - `PORT` env var: server port (default: `4889`)
+
+## Requirements
+
+- macOS (uses `ditto` for ZIP extraction in the `import` command)
