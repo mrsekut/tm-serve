@@ -1,4 +1,4 @@
-// push command. Serves multiple .user.js files and opens them sequentially in the browser for Tampermonkey installation.
+// push command. Serves multiple .user.js files and opens an index page for Tampermonkey installation.
 
 import { basename } from 'path';
 import open from 'open';
@@ -12,8 +12,6 @@ export async function push(scriptPaths: string[], port: number): Promise<void> {
     scripts.set(name, content);
   }
 
-  const indexHtml = buildPushIndexHtml(port, Array.from(scripts.keys()));
-
   const server = Bun.serve({
     port,
     hostname: '127.0.0.1',
@@ -22,7 +20,8 @@ export async function push(scriptPaths: string[], port: number): Promise<void> {
       const pathname = decodeURIComponent(url.pathname);
 
       if (pathname === '/') {
-        return new Response(indexHtml, {
+        const html = buildPushIndexHtml(url.origin, Array.from(scripts.keys()));
+        return new Response(html, {
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
         });
       }
@@ -42,21 +41,20 @@ export async function push(scriptPaths: string[], port: number): Promise<void> {
     },
   });
 
-  console.log(`Push server started at http://127.0.0.1:${server.port}/`);
-  console.log(`Serving ${scripts.size} script(s):\n`);
-
+  const indexUrl = `http://127.0.0.1:${server.port}/`;
+  console.log(`Serving ${scripts.size} script(s) at ${indexUrl}`);
   for (const name of scripts.keys()) {
-    const url = `http://127.0.0.1:${server.port}/${encodeURIComponent(name)}`;
-    console.log(`  Opening ${name}...`);
-    try {
-      await open(url);
-    } catch {
-      console.log(`  Could not open browser. Visit: ${url}`);
-    }
-    await sleep(1000);
+    console.log(`  - ${name}`);
+  }
+  console.log('\nOpening browser... Click each link to install.');
+
+  try {
+    await open(indexUrl);
+  } catch {
+    console.log(`Could not open browser. Visit: ${indexUrl}`);
   }
 
-  console.log('\nAll scripts opened. Press Ctrl+C to stop the server.');
+  console.log('Press Ctrl+C to stop the server.');
 
   process.on('SIGINT', () => {
     console.log('\nShutting down...');
@@ -65,10 +63,10 @@ export async function push(scriptPaths: string[], port: number): Promise<void> {
   });
 }
 
-function buildPushIndexHtml(port: number, fileNames: string[]): string {
+function buildPushIndexHtml(origin: string, fileNames: string[]): string {
   const links = fileNames
     .map(name => {
-      const url = `http://127.0.0.1:${port}/${encodeURIComponent(name)}`;
+      const url = `${origin}/${encodeURIComponent(name)}`;
       return `  <li><a href="${url}">${name}</a></li>`;
     })
     .join('\n');
@@ -78,14 +76,10 @@ function buildPushIndexHtml(port: number, fileNames: string[]): string {
 <head><meta charset="utf-8"><title>tm-serve push</title></head>
 <body>
   <h1>tm-serve push</h1>
-  <p>${fileNames.length} script(s):</p>
+  <p>${fileNames.length} script(s). Click each link to install:</p>
   <ul>
 ${links}
   </ul>
 </body>
 </html>`;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }

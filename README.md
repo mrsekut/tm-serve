@@ -27,7 +27,7 @@ tm-serve                            # default: script.user.js
 
 ### `push` — Install scripts to browser
 
-Serves multiple `.user.js` files and opens them sequentially in the browser for Tampermonkey installation.
+Serves multiple `.user.js` files and opens an index page in the browser. Click each link to install via Tampermonkey.
 
 ```bash
 tm-serve push --all                 # all *.user.js under current directory
