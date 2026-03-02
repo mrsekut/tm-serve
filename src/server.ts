@@ -1,3 +1,5 @@
+// HTTP server. Serves a single userscript and an index HTML page.
+
 import { buildIndexHtml } from './template';
 
 export type ScriptProvider = () => Promise<string>;

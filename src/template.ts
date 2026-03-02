@@ -1,3 +1,5 @@
+// Template generation. Produces userscript boilerplate and index HTML.
+
 const METADATA_TEMPLATE = `// ==UserScript==
 // @name        my-script
 // @namespace   http://tampermonkey.net/

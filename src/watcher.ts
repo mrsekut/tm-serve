@@ -1,3 +1,5 @@
+// File watcher. Detects script changes and invokes a reload callback.
+
 import { watch, type FSWatcher } from 'fs';
 
 export function watchScript(
