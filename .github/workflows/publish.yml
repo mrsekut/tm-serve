@@ -4,7 +4,7 @@ name: npm publish
 on:
   push:
     tags:
-      - "*"
+      - '*'
 
 jobs:
   publish:
@@ -20,11 +20,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          registry-url: "https://registry.npmjs.org"
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
 
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --provenance --access public
